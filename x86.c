@@ -23,6 +23,10 @@ extern "C" {
   #error "libco: please define fastcall macro"
 #endif
 
+#ifdef _MSC_VER
+#define thread_local __declspec (thread)
+#endif
+
 static thread_local long co_active_buffer[64];
 static thread_local cothread_t co_active_handle = 0;
 static void (fastcall *co_swap)(cothread_t, cothread_t) = 0;
