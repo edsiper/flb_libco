@@ -64,7 +64,8 @@ static void crash(void)
    assert(0);
 }
 
-cothread_t co_create(unsigned int size, void (*entrypoint)(void))
+cothread_t co_create(unsigned int size, void (*entrypoint)(void),
+                     size_t *out_size)
 {
    size = (size + 1023) & ~1023;
    cothread_t handle = 0;
@@ -102,6 +103,8 @@ cothread_t co_create(unsigned int size, void (*entrypoint)(void))
    ptr[20] = (uintptr_t)ptr + size + 512 - 16; /* x30, stack pointer */
    ptr[19] = ptr[20]; /* x29, frame pointer */
    ptr[21] = (uintptr_t)entrypoint; /* PC (link register x31 gets saved here). */
+
+   *out_size = size + 512;
    return handle;
 }
 
@@ -126,4 +129,3 @@ void co_switch(cothread_t handle)
 #ifdef __cplusplus
 }
 #endif
-
