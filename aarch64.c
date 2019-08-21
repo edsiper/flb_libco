@@ -12,8 +12,12 @@
 #include <string.h>
 #include <stdint.h>
 
-#ifndef IOS
-#include <malloc.h>
+#if defined(IOS)
+#elif defined(__FreeBSD__)
+#include <malloc_np.h>
+#define HAVE_POSIX_MEMALIGN 1
+#else                                
+#include <malloc.h>     
 #endif
 
 #ifdef __cplusplus
