@@ -29,3 +29,10 @@ ENDIF(HAVE_POSIX_MEMALIGN_IN_PTHREAD_NP)
 
 add_definitions(-DLIBCO_MP)
 add_library(co STATIC ${src})
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  # The validated backend uses pthread TLS and shared memory. Consumers need
+  # matching compile/link flags even when the library's tests are disabled.
+  target_compile_options(co PUBLIC -pthread)
+  target_link_libraries(co INTERFACE -pthread "-sASYNCIFY=1")
+endif()
