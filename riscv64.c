@@ -180,11 +180,11 @@ cothread_t co_create(unsigned int size, void (*entrypoint)(void),
 
   context_size = (sizeof(co_context) + 15) & ~(size_t)15;
 
-  if ((size_t)size > SIZE_MAX - 15) {
+  if ((size_t)size > SIZE_MAX - 512 - 15) {
     return 0;
   }
 
-  stack_size = ((size_t)size + 15) & ~(size_t)15;
+  stack_size = ((size_t)size + 512 + 15) & ~(size_t)15;
   if (stack_size > SIZE_MAX - context_size) {
     return 0;
   }
