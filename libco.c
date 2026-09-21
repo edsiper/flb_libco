@@ -10,6 +10,12 @@
 #if defined(__clang__) || defined(__GNUC__)
   #if defined(__EMSCRIPTEN__)
     #include "emscripten.c"
+  #elif defined(_WIN32)
+    /* Use OS-managed contexts on Windows. The amd64 assembly backend uses
+     * aligned SSE stores, but MinGW's TLS context can be only 8-byte aligned.
+     * Check the OS before the CPU so MinGW and Clang select Windows fibers.
+     */
+    #include "fiber.c"
   #elif defined(__i386__)
     #include "x86.c"
   #elif defined(__amd64__)
@@ -26,8 +32,6 @@
     #include "ppc64le.c"
   #elif defined(_ARCH_PPC) && !defined(__LITTLE_ENDIAN__)
     #include "ppc.c"
-  #elif defined(_WIN32)
-    #include "fiber.c"
   #else
     #include "sjlj.c"
   #endif
