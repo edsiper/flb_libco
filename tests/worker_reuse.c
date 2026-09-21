@@ -101,6 +101,22 @@ static void *other_fiber_user(void *data)
     abort();
 }
 
+static void wait_for_worker_reuse(void)
+{
+    double deadline = emscripten_get_now() + 5000;
+
+    /* With PROXY_TO_PTHREAD and a pool of two, main occupies one worker.
+     * pthread_join posts cleanup to the JS main thread; it need not have
+     * returned the other worker to the pool yet. Node can otherwise spawn a
+     * fresh worker, even with PTHREAD_POOL_SIZE_STRICT, invalidating this test.
+     * Wait for the actual pool state, not an assumed scheduling delay.
+     */
+    while (MAIN_THREAD_EM_ASM_INT({ return PThread.unusedWorkers.length; }) != 1) {
+        CHECK(emscripten_get_now() < deadline);
+        emscripten_sleep(1);
+    }
+}
+
 int main(void)
 {
     pthread_t thread;
@@ -111,9 +127,11 @@ int main(void)
         exit_on_entry = mode;
         CHECK(pthread_create(&thread, NULL, install_and_exit, (void *) (intptr_t) (mode + 1)) == 0);
         CHECK(pthread_join(thread, &result) == 0 && result == (void *) 42);
+        wait_for_worker_reuse();
         exit_on_entry = 0;
         CHECK(pthread_create(&thread, NULL, other_fiber_user, (void *) (intptr_t) (mode + 1)) == 0);
         CHECK(pthread_join(thread, &result) == 0 && result == (void *) 42);
+        wait_for_worker_reuse();
     }
     puts("WASM worker reuse passed: first-entry/rewind exit followed by a non-libco fiber user");
     return 0;
